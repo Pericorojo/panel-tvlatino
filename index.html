@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel TV Latino</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#0b1020;--card:#141b33;--card2:#1b2445;--line:#2a3560;--text:#e8ebf5;--dim:#9aa1b2;--acc:#7c5cff;--acc2:#5b8cff;--green:#2ecc71;--gold:#f5b942;--red:#ff5c6c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+a{color:var(--acc2)}
+header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#0e1430;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;flex:1;min-width:140px}
+select,input,textarea,button{font:inherit;color:var(--text)}
+select,input,textarea{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{min-height:80px;resize:vertical}
+button{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+button.pri{background:linear-gradient(90deg,var(--acc),var(--acc2));border:0;font-weight:600}
+button.del{color:var(--red)}
+button:disabled{opacity:.5;cursor:default}
+nav{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;border-bottom:1px solid var(--line)}
+nav button{white-space:nowrap}
+nav button.on{background:var(--acc);border-color:var(--acc)}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1;min-width:180px}
+label{display:block;font-size:13px;color:var(--dim);margin:10px 0 4px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:12px;color:var(--text)}
+.chk input{width:auto}
+.hint{font-size:12.5px;color:var(--dim);margin-top:4px}
+.item{display:flex;gap:12px;align-items:flex-start;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px}
+.item img{width:220px;max-width:40%;border-radius:6px;background:#000}
+.item .b{flex:1;min-width:0}
+.item h3{margin:0 0 4px;font-size:15px}
+.tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:20px;background:#26305a;color:var(--dim);margin:2px 4px 2px 0}
+.tag.g{background:#173d2b;color:var(--green)}.tag.y{background:#3d3215;color:var(--gold)}.tag.r{background:#401a22;color:var(--red)}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--dim);font-weight:500;font-size:12.5px}
+.tablewrap{overflow-x:auto}
+#login{max-width:420px;margin:12vh auto;text-align:center}
+#login img{width:120px}
+.preview{margin-top:8px;max-width:100%;border-radius:8px;display:none}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#222c55;border:1px solid var(--line);padding:10px 16px;border-radius:10px;display:none;z-index:20}
+.dnsrow{display:flex;gap:6px;margin-top:6px}
+.dnsrow input{flex:1}
+.hidden{display:none!important}
+h2{font-size:16px;margin:0 0 6px}
+.muted{color:var(--dim)}
+@media(max-width:640px){.item{flex-direction:column}.item img{max-width:100%;width:100%}}
+</style>
+</head>
+<body>
+
+<div id="login" class="card">
+  <h2>Panel de administración</h2>
+  <p class="muted">Ingresá con la cuenta de Google autorizada.</p>
+  <button class="pri" id="btnLogin">Ingresar con Google</button>
+  <p id="loginMsg" class="hint"></p>
+</div>
+
+<div id="app" class="hidden">
+<header>
+  <h1>Panel</h1>
+  <select id="appSel" style="width:auto">
+    <option value="tvlatino">TV Latino</option>
+    <option value="ultratv">Ultra TV</option>
+  </select>
+  <span id="who" class="muted" style="font-size:13px"></span>
+  <button id="btnLogout">Salir</button>
+</header>
+<nav>
+  <button data-tab="msgs" class="on">Mensajes</button>
+  <button data-tab="promos">Banners</button>
+  <button data-tab="clients">Clientes</button>
+  <button data-tab="config">DNS y ajustes</button>
+</nav>
+<main>
+
+<!-- ================= MENSAJES ================= -->
+<section id="tab-msgs">
+  <div class="card">
+    <h2 id="msgFormTitle">Nuevo mensaje</h2>
+    <label>Título</label><input id="mTitle" maxlength="120">
+    <label>Texto</label><textarea id="mText" maxlength="2000"></textarea>
+    <label>Para</label>
+    <select id="mTarget">
+      <option value="all">Todos los clientes</option>
+      <option value="users">Solo algunos usuarios</option>
+    </select>
+    <div id="mUsersBox" class="hidden">
+      <label>Usuarios (separados por coma)</label>
+      <textarea id="mUsers" style="min-height:50px" placeholder="juan123, maria22"></textarea>
+    </div>
+    <div class="row">
+      <div><label>Mostrar desde (opcional)</label><input type="datetime-local" id="mFrom"></div>
+      <div><label>Mostrar hasta (opcional)</label><input type="datetime-local" id="mUntil"></div>
+    </div>
+    <div class="row">
+      <div><label>Texto del botón (opcional)</label><input id="mButton" placeholder="Renovar ahora"></div>
+      <div><label>Link del botón (opcional)</label><input id="mLink" placeholder="https://..."></div>
+    </div>
+    <div class="actions"><button type="button" data-wa="mLink" data-btn="mButton">Usar mi WhatsApp</button></div>
+    <div class="hint">En textos y links podés usar {usuario} y se reemplaza por el usuario del cliente.</div>
+    <label>Imagen (opcional)</label><input type="file" id="mImage" accept="image/*">
+    <img id="mPrev" class="preview"><div class="actions"><button type="button" id="mImgDel" class="del hidden">Quitar imagen</button></div>
+    <label class="chk"><input type="checkbox" id="mImportant"> Importante: aparece como aviso al abrir la app</label>
+    <div class="actions" style="margin-top:14px">
+      <button class="pri" id="mSave">Enviar mensaje</button>
+      <button id="mCancel" class="hidden">Cancelar edición</button>
+    </div>
+  </div>
+  <div class="card"><h2>Mensajes enviados</h2><div id="msgList" class="muted">Cargando…</div></div>
+</section>
+
+<!-- ================= BANNERS ================= -->
+<section id="tab-promos" class="hidden">
+  <div class="card">
+    <h2 id="pFormTitle">Nuevo banner</h2>
+    <label>Imagen para TV (horizontal, ideal 2000×400 o 1600×320)</label>
+    <input type="file" id="pImage" accept="image/*"><img id="pPrev" class="preview">
+    <label>Imagen para celular (opcional, ideal 1000×500)</label>
+    <input type="file" id="pImagePhone" accept="image/*"><img id="pPrevPhone" class="preview">
+    <div class="actions"><button type="button" id="pPhoneDel" class="del hidden">Quitar imagen de celular</button></div>
+    <div class="row">
+      <div><label>Título (opcional, va encima de la imagen)</label><input id="pTitle" maxlength="80"></div>
+      <div><label>Texto (opcional)</label><input id="pText" maxlength="200"></div>
+    </div>
+    <div class="row">
+      <div><label>Texto del botón (opcional)</label><input id="pButton" placeholder="Quiero esta promo"></div>
+      <div><label>Link al tocar el banner (opcional)</label><input id="pLink" placeholder="https://wa.me/..."></div>
+    </div>
+    <div class="actions"><button type="button" data-wa="pLink" data-btn="pButton">Usar mi WhatsApp</button></div>
+    <div class="row">
+      <div><label>Mostrar desde (opcional)</label><input type="datetime-local" id="pFrom"></div>
+      <div><label>Mostrar hasta (opcional)</label><input type="datetime-local" id="pUntil"></div>
+    </div>
+    <div class="row">
+      <div><label>Segundos en pantalla</label><input type="number" id="pSeconds" value="8" min="3" max="60"></div>
+      <div><label>Orden (1 = primero)</label><input type="number" id="pOrder" value="1" min="1" max="99"></div>
+    </div>
+    <label>Solo para estos usuarios (vacío = todos)</label><input id="pUsers" placeholder="vacío = todos">
+    <div class="actions" style="margin-top:14px">
+      <button class="pri" id="pSave">Publicar banner</button>
+      <button id="pCancel" class="hidden">Cancelar edición</button>
+    </div>
+    <div class="hint">Si no hay ningún banner publicado, la app muestra los banners que vienen incluidos.</div>
+  </div>
+  <div class="card"><h2>Banners</h2><div id="promoList" class="muted">Cargando…</div></div>
+</section>
+
+<!-- ================= CLIENTES ================= -->
+<section id="tab-clients" class="hidden">
+  <div class="card">
+    <h2>Equipos con la app</h2>
+    <p class="hint">Aparecen solos cuando un cliente abre la app (versión 2.3 o más nueva).</p>
+    <div class="row">
+      <input id="cSearch" placeholder="Buscar usuario o equipo">
+      <select id="cFilter" style="max-width:260px">
+        <option value="all">Todos</option>
+        <option value="7">Vencen en 7 días o menos</option>
+        <option value="3">Vencen en 3 días o menos</option>
+        <option value="exp">Vencidos</option>
+        <option value="idle">Sin abrir la app hace 7+ días</option>
+      </select>
+    </div>
+    <div class="actions"><button id="cMsgAll">Escribir a los de esta lista</button> <span id="cCount" class="muted" style="align-self:center"></span></div>
+    <div class="tablewrap" style="margin-top:10px"><table>
+      <thead><tr><th>Usuario</th><th>Vence</th><th>Equipo</th><th>Versión</th><th>Última vez</th><th></th></tr></thead>
+      <tbody id="cBody"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ================= CONFIG ================= -->
+<section id="tab-config" class="hidden">
+  <div class="card">
+    <h2>DNS del servicio</h2>
+    <p class="hint">La app prueba el primero; si no responde, pasa al siguiente solo. Se actualiza en los equipos sin descargar otra app. El DNS que viene dentro de la app siempre queda como respaldo.</p>
+    <div id="dnsList"></div>
+    <div class="actions"><button id="dnsAdd">+ Agregar DNS</button><button id="dnsTest">Probar DNS</button></div>
+    <div id="dnsTestOut" class="hint"></div>
+  </div>
+  <div class="card">
+    <h2>WhatsApp de ventas</h2>
+    <label>Número (código de país + número, sin + ni espacios)</label>
+    <input id="cfgWa" placeholder="5491121880469">
+  </div>
+  <div class="card">
+    <h2>Avisos de vencimiento</h2>
+    <p class="hint">Aparecen solos según los días que le faltan a cada cliente. Podés usar {dias}, {fecha} y {usuario}. Si dejás todo vacío se usan los textos de la app.</p>
+    <div id="remList"></div>
+  </div>
+  <div class="actions"><button class="pri" id="cfgSave">Guardar ajustes</button></div>
+</section>
+
+</main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, query, where, Timestamp, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const fb = initializeApp({
+  apiKey: "AIzaSyAOpiG2BtYwlvwXhTrsoiyevcOMzvPhdEM",
+  authDomain: "tvlatino-fab1e.firebaseapp.com",
+  projectId: "tvlatino-fab1e",
+  messagingSenderId: "800812830421",
+  appId: "1:800812830421:web:86876115e4d1003c4bdc5c"
+});
+const auth = getAuth(fb);
+const db = getFirestore(fb);
+const ADMIN = "omargabriel.cardozo@gmail.com";
+const DEFAULT_WA = { tvlatino: "5491121880469", ultratv: "" };
+const DEFAULT_REM = [
+  { days: 7, title: "En {dias} días vence tu servicio", text: "Consultá las nuevas promociones.", button: "Ver promociones" },
+  { days: 3, title: "En {dias} días vence tu servicio", text: "Renová ahora y seguí disfrutando sin cortes.", button: "Renovar ahora" },
+  { days: 1, title: "Mañana vence tu servicio", text: "Solicitá tu renovación ahora.", button: "Renovar ahora" },
+  { days: 0, title: "Hoy vence tu servicio", text: "Solicitá tu renovación ahora para no quedarte sin señal.", button: "Renovar ahora" }
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let APP = localStorage.getItem("panelApp") || "tvlatino";
+$("appSel").value = APP;
+let cfgCache = {};
+
+function toast(t, ms = 2600) { const e = $("toast"); e.textContent = t; e.style.display = "block"; clearTimeout(e._t); e._t = setTimeout(() => e.style.display = "none", ms); }
+function users(s) { return String(s || "").split(/[\s,;]+/).map(x => x.trim().toLowerCase()).filter(Boolean); }
+function toTs(v) { return v ? Timestamp.fromDate(new Date(v)) : null; }
+function toInput(ts) { if (!ts) return ""; const d = ts.toDate(); const p = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+function fmt(ts) { if (!ts) return ""; const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
+function fmtDay(d) { return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" }); }
+function state(from, until) {
+  const now = Date.now();
+  if (from && from.toMillis() > now) return '<span class="tag y">Programado</span>';
+  if (until && until.toMillis() < now) return '<span class="tag r">Terminado</span>';
+  return '<span class="tag g">Visible</span>';
+}
+function waLink() {
+  const n = (cfgCache.whatsapp || DEFAULT_WA[APP] || "").replace(/\D/g, "");
+  return n ? `https://wa.me/${n}?text=Hola%2C%20soy%20{usuario}%20y%20quiero%20renovar` : "";
+}
+document.querySelectorAll("[data-wa]").forEach(b => b.onclick = () => {
+  const l = waLink(); if (!l) return toast("Primero cargá el WhatsApp en Ajustes");
+  $(b.dataset.wa).value = l; if (!$(b.dataset.btn).value) $(b.dataset.btn).value = "Renovar ahora";
+});
+
+/** Achica la imagen y la guarda como JPEG dentro del documento (sin Storage) */
+function readImage(file, maxW, maxH) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const r = Math.min(1, maxW / img.width, maxH / img.height);
+      const w = Math.round(img.width * r), h = Math.round(img.height * r);
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      c.getContext("2d").drawImage(img, 0, 0, w, h);
+      let q = 0.85, out = c.toDataURL("image/jpeg", q);
+      while (out.length > 380000 && q > 0.4) { q -= 0.1; out = c.toDataURL("image/jpeg", q); }
+      URL.revokeObjectURL(img.src); res(out);
+    };
+    img.onerror = () => rej(new Error("No se pudo leer la imagen"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// ---------- Login ----------
+$("btnLogin").onclick = async () => {
+  const p = new GoogleAuthProvider(); p.setCustomParameters({ prompt: "select_account" });
+  try { await signInWithPopup(auth, p); }
+  catch (e) {
+    if (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment") signInWithRedirect(auth, p);
+    else $("loginMsg").textContent = "No se pudo ingresar: " + (e.code || e.message);
+  }
+};
+$("btnLogout").onclick = () => signOut(auth);
+onAuthStateChanged(auth, u => {
+  const ok = u && u.email === ADMIN && u.emailVerified;
+  $("login").classList.toggle("hidden", !!ok);
+  $("app").classList.toggle("hidden", !ok);
+  if (u && !ok) { $("loginMsg").textContent = "La cuenta " + u.email + " no tiene permiso."; signOut(auth); }
+  if (ok) { $("who").textContent = u.email; loadAll(); }
+});
+$("appSel").onchange = () => { APP = $("appSel").value; localStorage.setItem("panelApp", APP); resetMsg(); resetPromo(); loadAll(); };
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("main section").forEach(s => s.classList.toggle("hidden", s.id !== "tab-" + b.dataset.tab));
+});
+function showTab(t) { document.querySelector(`nav button[data-tab="${t}"]`).click(); }
+
+async function loadAll() {
+  await loadConfig();
+  loadMsgs(); loadPromos(); loadClients();
+}
+
+// ---------- Mensajes ----------
+let mEditing = null, mImage = null;
+$("mTarget").onchange = () => $("mUsersBox").classList.toggle("hidden", $("mTarget").value !== "users");
+$("mImage").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  mImage = await readImage(f, 1280, 720); $("mPrev").src = mImage; $("mPrev").style.display = "block"; $("mImgDel").classList.remove("hidden");
+};
+$("mImgDel").onclick = () => { mImage = null; $("mImage").value = ""; $("mPrev").style.display = "none"; $("mImgDel").classList.add("hidden"); };
+function resetMsg() {
+  mEditing = null; mImage = null;
+  ["mTitle", "mText", "mUsers", "mFrom", "mUntil", "mButton", "mLink", "mImage"].forEach(i => $(i).value = "");
+  $("mTarget").value = "all"; $("mUsersBox").classList.add("hidden"); $("mImportant").checked = false;
+  $("mPrev").style.display = "none"; $("mImgDel").classList.add("hidden");
+  $("msgFormTitle").textContent = "Nuevo mensaje"; $("mSave").textContent = "Enviar mensaje"; $("mCancel").classList.add("hidden");
+}
+$("mCancel").onclick = resetMsg;
+$("mSave").onclick = async () => {
+  const title = $("mTitle").value.trim(), text = $("mText").value.trim();
+  if (!title && !text) return toast("Escribí un título o un texto");
+  const us = $("mTarget").value === "users" ? users($("mUsers").value) : [];
+  if ($("mTarget").value === "users" && !us.length) return toast("Escribí al menos un usuario");
+  const data = {
+    app: APP, title, text, users: us, important: $("mImportant").checked,
+    button: $("mButton").value.trim(), link: $("mLink").value.trim(),
+    from: toTs($("mFrom").value), until: toTs($("mUntil").value), image: mImage || ""
+  };
+  $("mSave").disabled = true;
+  try {
+    if (mEditing) await updateDoc(doc(db, "messages", mEditing), data);
+    else await addDoc(collection(db, "messages"), { ...data, createdAt: serverTimestamp() });
+    toast(mEditing ? "Mensaje actualizado" : "Mensaje enviado"); resetMsg(); loadMsgs();
+  } catch (e) { toast("Error: " + e.message, 5000); }
+  $("mSave").disabled = false;
+};
+let msgs = [];
+async function loadMsgs() {
+  const [ms, rd] = await Promise.all([
+    getDocs(query(collection(db, "messages"), where("app", "==", APP))),
+    getDocs(collection(db, "reads")).catch(() => ({ docs: [] }))
+  ]);
+  const reads = {};
+  rd.docs.forEach(d => { const r = d.data(); (reads[r.msg] = reads[r.msg] || []).push(r.user); });
+  msgs = ms.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+  $("msgList").innerHTML = msgs.length ? "" : "Todavía no enviaste mensajes.";
+  msgs.forEach(m => {
+    const r = [...new Set(reads[m.id] || [])];
+    const el = document.createElement("div"); el.className = "item";
+    el.innerHTML = `${m.image ? `<img src="${m.image}">` : ""}<div class="b">
+      <h3>${esc(m.title || "(sin título)")}</h3><div>${esc(m.text).replace(/\n/g, "<br>")}</div>
+      <div style="margin-top:6px">${state(m.from, m.until)}
+        ${m.important ? '<span class="tag y">Importante</span>' : ""}
+        <span class="tag">${m.users?.length ? "Para: " + esc(m.users.join(", ")) : "Para todos"}</span>
+        <span class="tag">${fmt(m.createdAt)}</span>
+        ${m.until ? `<span class="tag">Hasta ${fmt(m.until)}</span>` : ""}
+        <span class="tag" title="${esc(r.join(", "))}">Leído por ${r.length}</span></div>
+      <div class="actions"><button data-e>Editar</button><button data-r>Ver quién lo leyó</button><button class="del" data-d>Borrar</button></div></div>`;
+    el.querySelector("[data-e]").onclick = () => editMsg(m);
+    el.querySelector("[data-r]").onclick = () => alert(r.length ? "Lo leyeron:\n" + r.join("\n") : "Todavía nadie lo leyó.");
+    el.querySelector("[data-d]").onclick = async () => { if (confirm("¿Borrar este mensaje? Deja de verse en las apps.")) { await deleteDoc(doc(db, "messages", m.id)); loadMsgs(); } };
+    $("msgList").appendChild(el);
+  });
+}
+function editMsg(m) {
+  resetMsg(); mEditing = m.id; mImage = m.image || null;
+  $("mTitle").value = m.title || ""; $("mText").value = m.text || "";
+  $("mTarget").value = m.users?.length ? "users" : "all"; $("mUsersBox").classList.toggle("hidden", !m.users?.length);
+  $("mUsers").value = (m.users || []).join(", "); $("mFrom").value = toInput(m.from); $("mUntil").value = toInput(m.until);
+  $("mButton").value = m.button || ""; $("mLink").value = m.link || ""; $("mImportant").checked = !!m.important;
+  if (mImage) { $("mPrev").src = mImage; $("mPrev").style.display = "block"; $("mImgDel").classList.remove("hidden"); }
+  $("msgFormTitle").textContent = "Editar mensaje"; $("mSave").textContent = "Guardar cambios"; $("mCancel").classList.remove("hidden");
+  showTab("msgs"); window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function newMsgFor(list) {
+  resetMsg(); $("mTarget").value = "users"; $("mUsersBox").classList.remove("hidden");
+  $("mUsers").value = list.join(", "); showTab("msgs"); window.scrollTo({ top: 0 }); $("mTitle").focus();
+}
+
+// ---------- Banners ----------
+let pEditing = null, pImg = null, pImgPhone = null;
+$("pImage").onchange = async e => { const f = e.target.files[0]; if (!f) return; pImg = await readImage(f, 2000, 400); $("pPrev").src = pImg; $("pPrev").style.display = "block"; };
+$("pImagePhone").onchange = async e => { const f = e.target.files[0]; if (!f) return; pImgPhone = await readImage(f, 1000, 500); $("pPrevPhone").src = pImgPhone; $("pPrevPhone").style.display = "block"; $("pPhoneDel").classList.remove("hidden"); };
+$("pPhoneDel").onclick = () => { pImgPhone = null; $("pImagePhone").value = ""; $("pPrevPhone").style.display = "none"; $("pPhoneDel").classList.add("hidden"); };
+function resetPromo() {
+  pEditing = null; pImg = null; pImgPhone = null;
+  ["pTitle", "pText", "pButton", "pLink", "pFrom", "pUntil", "pUsers", "pImage", "pImagePhone"].forEach(i => $(i).value = "");
+  $("pSeconds").value = 8; $("pOrder").value = 1;
+  $("pPrev").style.display = "none"; $("pPrevPhone").style.display = "none"; $("pPhoneDel").classList.add("hidden");
+  $("pFormTitle").textContent = "Nuevo banner"; $("pSave").textContent = "Publicar banner"; $("pCancel").classList.add("hidden");
+}
+$("pCancel").onclick = resetPromo;
+$("pSave").onclick = async () => {
+  if (!pImg && !$("pTitle").value.trim()) return toast("Subí una imagen (o escribí un título)");
+  const data = {
+    app: APP, title: $("pTitle").value.trim(), text: $("pText").value.trim(),
+    button: $("pButton").value.trim(), link: $("pLink").value.trim(),
+    image: pImg || "", imagePhone: pImgPhone || "", users: users($("pUsers").value),
+    from: toTs($("pFrom").value), until: toTs($("pUntil").value),
+    seconds: Math.max(3, parseInt($("pSeconds").value) || 8), order: parseInt($("pOrder").value) || 1
+  };
+  $("pSave").disabled = true;
+  try {
+    if (pEditing) await updateDoc(doc(db, "promos", pEditing), data);
+    else await addDoc(collection(db, "promos"), { ...data, createdAt: serverTimestamp() });
+    toast("Banner publicado"); resetPromo(); loadPromos();
+  } catch (e) { toast("Error: " + e.message, 5000); }
+  $("pSave").disabled = false;
+};
+async function loadPromos() {
+  const ps = await getDocs(query(collection(db, "promos"), where("app", "==", APP)));
+  const list = ps.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
+  $("promoList").innerHTML = list.length ? "" : "No hay banners publicados (la app muestra los que trae incluidos).";
+  list.forEach(p => {
+    const el = document.createElement("div"); el.className = "item";
+    el.innerHTML = `${p.image ? `<img src="${p.image}">` : ""}<div class="b">
+      <h3>${esc(p.title || "Banner")} <span class="muted" style="font-weight:400">· orden ${p.order || 1}</span></h3>
+      <div class="muted">${esc(p.text)}</div>
+      <div style="margin-top:6px">${state(p.from, p.until)}
+        ${p.from ? `<span class="tag">Desde ${fmt(p.from)}</span>` : ""}${p.until ? `<span class="tag">Hasta ${fmt(p.until)}</span>` : ""}
+        ${p.users?.length ? `<span class="tag">Para: ${esc(p.users.join(", "))}</span>` : ""}
+        ${p.imagePhone ? '<span class="tag">Con imagen de celular</span>' : ""}
+        ${p.link ? '<span class="tag">Con link</span>' : ""}</div>
+      <div class="actions"><button data-e>Editar</button><button class="del" data-d>Borrar</button></div></div>`;
+    el.querySelector("[data-e]").onclick = () => editPromo(p);
+    el.querySelector("[data-d]").onclick = async () => { if (confirm("¿Borrar este banner?")) { await deleteDoc(doc(db, "promos", p.id)); loadPromos(); } };
+    $("promoList").appendChild(el);
+  });
+}
+function editPromo(p) {
+  resetPromo(); pEditing = p.id; pImg = p.image || null; pImgPhone = p.imagePhone || null;
+  $("pTitle").value = p.title || ""; $("pText").value = p.text || ""; $("pButton").value = p.button || ""; $("pLink").value = p.link || "";
+  $("pFrom").value = toInput(p.from); $("pUntil").value = toInput(p.until); $("pUsers").value = (p.users || []).join(", ");
+  $("pSeconds").value = p.seconds || 8; $("pOrder").value = p.order || 1;
+  if (pImg) { $("pPrev").src = pImg; $("pPrev").style.display = "block"; }
+  if (pImgPhone) { $("pPrevPhone").src = pImgPhone; $("pPrevPhone").style.display = "block"; $("pPhoneDel").classList.remove("hidden"); }
+  $("pFormTitle").textContent = "Editar banner"; $("pSave").textContent = "Guardar cambios"; $("pCancel").classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ---------- Clientes ----------
+let devices = [];
+async function loadClients() {
+  try {
+    const ds = await getDocs(query(collection(db, "devices"), where("app", "==", APP)));
+    devices = ds.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { devices = []; }
+  renderClients();
+}
+function daysLeft(exp) {
+  if (!exp) return null;
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const e = new Date(exp * 1000); e.setHours(0, 0, 0, 0);
+  return Math.round((e - t) / 86400000);
+}
+function filtered() {
+  const q = $("cSearch").value.trim().toLowerCase(), f = $("cFilter").value, now = Date.now();
+  return devices.filter(d => {
+    if (q && !`${d.user} ${d.model} ${d.code}`.toLowerCase().includes(q)) return false;
+    const dl = daysLeft(d.exp);
+    if (f === "7") return dl !== null && dl >= 0 && dl <= 7;
+    if (f === "3") return dl !== null && dl >= 0 && dl <= 3;
+    if (f === "exp") return dl !== null && dl < 0;
+    if (f === "idle") return d.lastSeen && now - d.lastSeen.toMillis() > 7 * 86400000;
+    return true;
+  }).sort((a, b) => (b.lastSeen?.toMillis?.() || 0) - (a.lastSeen?.toMillis?.() || 0));
+}
+function renderClients() {
+  const list = filtered();
+  const n = new Set(list.map(d => d.user)).size;
+  $("cCount").textContent = `${n} usuario${n === 1 ? "" : "s"} · ${list.length} equipo${list.length === 1 ? "" : "s"}`;
+  $("cBody").innerHTML = list.length ? "" : `<tr><td colspan="6" class="muted">Sin equipos todavía.</td></tr>`;
+  list.forEach(d => {
+    const dl = daysLeft(d.exp);
+    const cls = dl === null ? "" : dl < 0 ? "r" : dl <= 3 ? "r" : dl <= 7 ? "y" : "g";
+    const vence = dl === null ? '<span class="tag">Sin vencimiento</span>'
+      : `<span class="tag ${cls}">${dl < 0 ? "Vencido" : dl === 0 ? "Hoy" : dl + " días"}</span><br><span class="muted">${fmtDay(new Date(d.exp * 1000))}</span>`;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td><b>${esc(d.user)}</b><br><span class="muted">Equipo ${esc(d.code || "")}</span></td><td>${vence}</td>
+      <td>${esc(d.model)}<br><span class="muted">${d.tv ? "TV" : "Celular"} · Android ${esc(d.android)}</span></td>
+      <td>${esc(d.version)}</td><td>${fmt(d.lastSeen)}</td>
+      <td><button data-m>Mensaje</button> <button class="del" data-x title="Quitar de la lista">✕</button></td>`;
+    tr.querySelector("[data-m]").onclick = () => newMsgFor([d.user]);
+    tr.querySelector("[data-x]").onclick = async () => { if (confirm("¿Quitar este equipo de la lista? Vuelve a aparecer si abre la app.")) { await deleteDoc(doc(db, "devices", d.id)); loadClients(); } };
+    $("cBody").appendChild(tr);
+  });
+}
+$("cSearch").oninput = renderClients;
+$("cFilter").onchange = renderClients;
+$("cMsgAll").onclick = () => {
+  const us = [...new Set(filtered().map(d => d.user).filter(Boolean))];
+  if (!us.length) return toast("No hay clientes en esta lista");
+  newMsgFor(us);
+};
+
+// ---------- Ajustes ----------
+function dnsRow(v = "") {
+  const r = document.createElement("div"); r.className = "dnsrow";
+  r.innerHTML = `<input placeholder="http://midns.com:8080" value="${esc(v)}"><button title="Subir">↑</button><button class="del" title="Quitar">✕</button>`;
+  r.children[1].onclick = () => { if (r.previousElementSibling) r.parentNode.insertBefore(r, r.previousElementSibling); };
+  r.children[2].onclick = () => r.remove();
+  $("dnsList").appendChild(r);
+}
+$("dnsAdd").onclick = () => dnsRow();
+$("dnsTest").onclick = async () => {
+  const list = [...$("dnsList").querySelectorAll("input")].map(i => i.value.trim()).filter(Boolean);
+  $("dnsTestOut").textContent = "Probando…";
+  const out = await Promise.all(list.map(async u => {
+    const url = (/^https?:\/\//i.test(u) ? u : "http://" + u).replace(/\/+$/, "") + "/player_api.php";
+    const t = performance.now();
+    try { await fetch(url, { mode: "no-cors", cache: "no-store", signal: AbortSignal.timeout(8000) }); return `${u}: responde (${Math.round(performance.now() - t)} ms)`; }
+    catch (e) { return `${u}: no responde desde esta red`; }
+  }));
+  $("dnsTestOut").innerHTML = out.map(esc).join("<br>") + "<br>Nota: los DNS http:// a veces no se pueden probar desde un navegador seguro; la app los prueba igual.";
+};
+function remRow(r) {
+  const el = document.createElement("div"); el.className = "item"; el.style.display = "block";
+  el.innerHTML = `<b>Cuando faltan ${r.days} día${r.days === 1 ? "" : "s"} o menos${r.days === 0 ? " (día del vencimiento)" : ""}</b>
+    <div class="row"><div><label>Título</label><input data-k="title"></div><div><label>Botón</label><input data-k="button"></div></div>
+    <label>Texto</label><input data-k="text">`;
+  el.dataset.days = r.days;
+  el.querySelectorAll("[data-k]").forEach(i => i.value = r[i.dataset.k] || "");
+  $("remList").appendChild(el);
+}
+async function loadConfig() {
+  const s = await getDoc(doc(db, "config", APP));
+  cfgCache = s.exists() ? s.data() : {};
+  $("dnsList").innerHTML = ""; $("remList").innerHTML = ""; $("dnsTestOut").textContent = "";
+  const dns = cfgCache.dns?.length ? cfgCache.dns : (APP === "tvlatino" ? ["http://tvlat2020.com"] : []);
+  dns.forEach(dnsRow); if (!dns.length) dnsRow();
+  $("cfgWa").value = cfgCache.whatsapp ?? DEFAULT_WA[APP];
+  const rem = DEFAULT_REM.map(d => ({ ...d, ...((cfgCache.reminders || []).find(x => x.days === d.days) || {}) }));
+  rem.forEach(remRow);
+}
+$("cfgSave").onclick = async () => {
+  const dns = [...$("dnsList").querySelectorAll("input")].map(i => i.value.trim()).filter(Boolean)
+    .map(u => (/^https?:\/\//i.test(u) ? u : "http://" + u).replace(/\/+$/, ""));
+  const reminders = [...$("remList").children].map(el => {
+    const o = { days: parseInt(el.dataset.days) };
+    el.querySelectorAll("[data-k]").forEach(i => o[i.dataset.k] = i.value.trim());
+    return o;
+  });
+  try {
+    await setDoc(doc(db, "config", APP), { dns, whatsapp: $("cfgWa").value.replace(/\D/g, ""), reminders, updatedAt: serverTimestamp() });
+    toast("Ajustes guardados"); loadConfig();
+  } catch (e) { toast("Error: " + e.message, 5000); }
+};
+</script>
+</body>
+</html>
